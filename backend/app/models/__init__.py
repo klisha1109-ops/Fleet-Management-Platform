@@ -4,7 +4,7 @@ from .vehicle import Vehicle
 from .shipment import Shipment
 from .trip import Trip
 from .gps_tracking import GPSTracking
-from .maintenance import VehicleMaintenance
+from .vehicle_maintenance import VehicleMaintenance
 from .fuel_record import FuelRecord
 from .notification import Notification
 from .attendance import Attendance

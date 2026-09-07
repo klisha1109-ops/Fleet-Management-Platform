@@ -23,6 +23,7 @@ import LogisticsAnalytics from "./pages/LogisticsAnalytics";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import FuelLog from "./pages/FuelLog";
 import Reports from "./pages/Reports";
+import UserManagement from "./pages/UserManagement";
 
 function App() {
   return (
@@ -96,6 +97,7 @@ function App() {
       <Route path="/maintenance" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
       <Route path="/fuel-log" element={<ProtectedRoute allowedRoles={["Admin", "FleetManager", "Dispatcher", "Driver"]}><FuelLog /></ProtectedRoute>} />
       <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+      <Route path="/users" element={<ProtectedRoute allowedRoles={["Admin"]}><UserManagement /></ProtectedRoute>} />
       <Route path="/analytics/fleet" element={<ProtectedRoute allowedRoles={["Admin", "FleetManager"]}><FleetAnalytics /></ProtectedRoute>} />
       <Route path="/analytics/logistics" element={<ProtectedRoute allowedRoles={["Admin", "FleetManager", "Dispatcher"]}><LogisticsAnalytics /></ProtectedRoute>} />
       <Route path="/analytics/admin" element={<ProtectedRoute allowedRoles={["Admin"]}><AdminAnalytics /></ProtectedRoute>} />

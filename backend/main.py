@@ -22,6 +22,7 @@ from app.routers.analytics import router as analytics_router
 from app.routers.fuel_record import router as fuel_record_router
 from app.routers.notification import router as notification_router
 from app.routers.reports import router as reports_router
+from app.routers.user import router as user_router
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -60,6 +61,7 @@ app.include_router(analytics_router)
 app.include_router(fuel_record_router)
 app.include_router(notification_router)
 app.include_router(reports_router)
+app.include_router(user_router)
 
 # Root endpoint
 @app.get("/")

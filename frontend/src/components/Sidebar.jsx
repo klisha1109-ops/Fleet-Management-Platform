@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/auth-context";
 
 const navigationByRole = {
-  Admin: [["/dashboard", "⌂", "Dashboard"], ["/shipments", "▣", "Shipments"], ["/vehicles", "▤", "Vehicles"], ["/maintenance", "⚙", "Maintenance"], ["/trips", "⌁", "Trips"], ["/live-tracking", "⌖", "Live Tracking"], ["/drivers", "♙", "Drivers"]],
+  Admin: [["/dashboard", "⌂", "Dashboard"], ["/shipments", "▣", "Shipments"], ["/vehicles", "▤", "Vehicles"], ["/maintenance", "⚙", "Maintenance"], ["/trips", "⌁", "Trips"], ["/live-tracking", "⌖", "Live Tracking"], ["/drivers", "♙", "Drivers"], ["/users", "♚", "User Management"]],
   FleetManager: [["/dashboard", "⌂", "Dashboard"], ["/shipments", "▣", "Shipments"], ["/vehicles", "▤", "Vehicles"], ["/maintenance", "⚙", "Maintenance"], ["/trips", "⌁", "Trips"], ["/live-tracking", "⌖", "Live Tracking"], ["/drivers", "♙", "Drivers"]],
   Dispatcher: [["/dashboard", "⌂", "Dashboard"], ["/shipments", "▣", "Shipments"], ["/vehicles", "▤", "Vehicles"], ["/maintenance", "⚙", "Maintenance (Read Only)"], ["/trips", "⌁", "Trips"], ["/live-tracking", "⌖", "Live Tracking"], ["/drivers", "♙", "Drivers"]],
   Driver: [["/dashboard", "⌂", "Dashboard"], ["/shipments", "▣", "My Shipments"], ["/trips", "⌁", "My Trips"], ["/live-tracking", "⌖", "Live Tracking"], ["/drivers", "♙", "My Driver Profile"], ["/maintenance", "⚙", "My Vehicle Maintenance"], ["/fuel-log", "⛽", "My Fuel"]],

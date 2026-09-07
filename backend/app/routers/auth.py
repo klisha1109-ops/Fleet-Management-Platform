@@ -168,6 +168,12 @@ def login(
             detail="Invalid email or password"
         )
 
+    if not authenticated_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This account has been deactivated. Contact an Administrator.",
+        )
+
     if not authenticated_user.email_verified:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

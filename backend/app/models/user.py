@@ -46,6 +46,11 @@ class User(Base):
         nullable=True,
     )
 
+    address = Column(
+        String(255),
+        nullable=True,
+    )
+
     role = Column(
         Enum(
             RoleEnum,
@@ -64,6 +69,15 @@ class User(Base):
         nullable=False,
         default=False,
         server_default="false",
+    )
+
+    # Deactivation preserves historical relationships while denying new and
+    # existing authenticated access to the account.
+    is_active = Column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default="true",
     )
 
     # Never store the actual six-digit code. Store only its SHA-256 hash.
