@@ -1,4 +1,5 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { divIcon } from "leaflet";
 import {
   MapContainer,
@@ -18,6 +19,7 @@ import "./LiveTracking.css";
 
 const RECONNECT_DELAY_MS = 3000;
 const HEARTBEAT_INTERVAL_MS = 25000;
+const GPS_STALE_AFTER_MS = 5 * 60 * 1000;
 const SELECTED_VEHICLE_KEY = "selectedVehicle";
 
 function getVehicleIcon(vehicleType = "") {
@@ -135,6 +137,9 @@ function relativeTime(recordedTime, now) {
 
 function LiveTracking() {
   const { user } = useContext(AuthContext);
+  const [searchParams] = useSearchParams();
+  const requestedVehicleId = searchParams.get("vehicle_id");
+  const requestedTripId = searchParams.get("trip_id");
   const [vehicles, setVehicles] = useState([]);
   const [trips, setTrips] = useState([]);
   const [drivers, setDrivers] = useState([]);
@@ -188,6 +193,7 @@ function LiveTracking() {
           user?.role === "Driver" ? activeDriverVehicles : loadedVehicles;
         const savedVehicleId = localStorage.getItem(SELECTED_VEHICLE_KEY);
         const initialVehicleId =
+          availableVehicles.find((vehicle) => vehicle.vehicle_id === requestedVehicleId)?.vehicle_id ||
           availableVehicles.find((vehicle) => vehicle.vehicle_id === savedVehicleId)
             ?.vehicle_id ||
           availableVehicles[0]?.vehicle_id ||
@@ -219,7 +225,7 @@ function LiveTracking() {
     return () => {
       cancelled = true;
     };
-  }, [user?.role]);
+  }, [requestedVehicleId, user?.role]);
 
   const visibleVehicles = useMemo(() => {
     if (user?.role !== "Driver") {
@@ -235,13 +241,14 @@ function LiveTracking() {
 
   const selectedTrip = useMemo(
     () =>
+      trips.find((trip) => trip.trip_id === requestedTripId) ||
       trips.find(
         (trip) => trip.vehicle_id === vehicleId && trip.status === "Active"
       ) ||
       trips.find(
         (trip) => trip.vehicle_id === vehicleId && trip.status === "Scheduled"
       ),
-    [trips, vehicleId]
+    [requestedTripId, trips, vehicleId]
   );
   const selectedVehicle = vehicles.find(
     (vehicle) => vehicle.vehicle_id === vehicleId
@@ -455,10 +462,16 @@ function LiveTracking() {
 
   const routePositions =
     route?.geometry?.map(([longitude, latitude]) => [latitude, longitude]) || [];
+  const isCompletedTrip = selectedTrip?.status === "Completed";
+  const locationIsFresh = location && now !== null && now - new Date(location.recorded_time).getTime() <= GPS_STALE_AFTER_MS;
+  const liveLocation = locationIsFresh ? location : null;
+  const routeStartLocation = routePositions.length ? { latitude: routePositions[0][0], longitude: routePositions[0][1], speed: 0 } : null;
+  const routeDestinationLocation = routePositions.length ? { latitude: routePositions[routePositions.length - 1][0], longitude: routePositions[routePositions.length - 1][1], speed: 0 } : null;
+  const displayedVehicleLocation = isCompletedTrip ? routeDestinationLocation : liveLocation || routeStartLocation;
   const mapCenter =
     routePositions[0] ||
-    (location
-      ? [location.latitude, location.longitude]
+    (displayedVehicleLocation
+      ? [displayedVehicleLocation.latitude, displayedVehicleLocation.longitude]
       : [11.0168, 76.9558]);
   const connectionLabel =
     connectionState === "Connected"
@@ -466,7 +479,7 @@ function LiveTracking() {
       : connectionState === "Offline"
         ? "Offline"
         : "Reconnecting";
-  const progress = Math.round(calculateRouteProgress(route?.geometry, location));
+  const progress = isCompletedTrip ? 100 : Math.round(calculateRouteProgress(route?.geometry, liveLocation));
   const remainingSeconds = route?.remaining_duration ??
     (route?.estimated_duration
       ? Math.max(
@@ -474,7 +487,7 @@ function LiveTracking() {
           Math.round((route.estimated_duration * (100 - progress)) / 100)
         )
       : null);
-  const liveEta =
+  const liveEta = isCompletedTrip ? "Completed" :
     remainingSeconds === null
       ? "-"
       : remainingSeconds < 60
@@ -549,7 +562,7 @@ function LiveTracking() {
 
           <div>
             <span>Last GPS update</span>
-            <strong>{relativeTime(location?.recorded_time, now)}</strong>
+            <strong>{liveLocation ? relativeTime(liveLocation.recorded_time, now) : isCompletedTrip ? "Trip completed" : "No live GPS"}</strong>
           </div>
 
           <div>
@@ -568,24 +581,24 @@ function LiveTracking() {
           <span className="telemetry-icon">SPD</span>
           <p>Speed</p>
           <strong>
-            {location?.speed ?? 0}
+            {liveLocation?.speed ?? 0}
             <small> km/h</small>
           </strong>
         </article>
         <article>
           <span className="telemetry-icon">LAT</span>
           <p>Latitude</p>
-          <strong>{location ? Number(location.latitude).toFixed(5) : "-"}</strong>
+          <strong>{displayedVehicleLocation ? Number(displayedVehicleLocation.latitude).toFixed(5) : "-"}</strong>
         </article>
         <article>
           <span className="telemetry-icon">LON</span>
           <p>Longitude</p>
-          <strong>{location ? Number(location.longitude).toFixed(5) : "-"}</strong>
+          <strong>{displayedVehicleLocation ? Number(displayedVehicleLocation.longitude).toFixed(5) : "-"}</strong>
         </article>
         <article>
           <span className="telemetry-icon">HDG</span>
           <p>Heading</p>
-          <strong>{heading}</strong>
+          <strong>{liveLocation ? heading : "-"}</strong>
         </article>
         <article>
           <span className="telemetry-icon">ETA</span>
@@ -605,12 +618,12 @@ function LiveTracking() {
             </h2>
           </div>
           <div className="tracking-map-controls">
-            <span className="route-legend">
+            {!isCompletedTrip && <span className="route-legend">
               <i /> Optimized route
-            </span>
-            <button type="button" onClick={() => setFollowVehicle((value) => !value)}>
+            </span>}
+            {!isCompletedTrip && <button type="button" onClick={() => setFollowVehicle((value) => !value)}>
               {followVehicle ? "Following vehicle" : "Follow vehicle"}
-            </button>
+            </button>}
             <button type="button" onClick={() => setCenterRequest((value) => value + 1)}>
               Center vehicle
             </button>
@@ -633,33 +646,27 @@ function LiveTracking() {
               attribution="&copy; OpenStreetMap contributors"
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            {routePositions.length > 0 && (
+            {!isCompletedTrip && routePositions.length > 0 && (
               <Polyline
                 positions={routePositions}
                 pathOptions={{ color: "#7254d8", weight: 5 }}
               />
             )}
-            {location && (
+            {displayedVehicleLocation && (
               <Marker
-                position={[location.latitude, location.longitude]}
+                position={[displayedVehicleLocation.latitude, displayedVehicleLocation.longitude]}
                 icon={getVehicleIcon(selectedVehicle?.vehicle_type)}
                 zIndexOffset={1000}
               />
             )}
             <MapController
-              route={route?.geometry}
-              location={location}
+              route={isCompletedTrip ? null : route?.geometry}
+              location={displayedVehicleLocation}
               followVehicle={followVehicle}
               centerRequest={centerRequest}
             />
           </MapContainer>
 
-          {!location && (
-            <div className="tracking-map-loading">
-              <span className="tracking-map-spinner" />
-              Waiting for an automatic GPS update...
-            </div>
-          )}
         </div>
       </section>
 

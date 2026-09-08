@@ -253,9 +253,9 @@ async def start_scheduled_trip(trip_id: UUID, db: Session = Depends(get_db), cur
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The shipment must be assigned before its trip can start.")
     if not trip.route_geometry or trip.planned_distance is None or trip.estimated_duration is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Calculate and save the route before starting this trip.")
-    started_trip = start_trip(db, trip, vehicle, shipment)
-    await gps_simulator.start(started_trip.trip_id, started_trip.vehicle_id)
-    return started_trip
+    # GPS positions are accepted only from an authorised telemetry publisher.
+    # Do not fabricate vehicle movement when a trip starts.
+    return start_trip(db, trip, vehicle, shipment)
 
 
 @router.patch("/{trip_id}/end", response_model=TripResponse)

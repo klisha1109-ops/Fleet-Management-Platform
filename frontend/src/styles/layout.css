@@ -1,5 +1,5 @@
 .app-shell { display: flex; min-height: 100vh; background: var(--bg); }
-.app-sidebar { position: sticky; top: 0; display: flex; width: 244px; height: 100vh; flex-direction: column; padding: 25px 15px 18px; background: linear-gradient(180deg, #271260, #110d37); color: #d8d1ff; }
+.app-sidebar { position: sticky; top: 0; display: flex; width: 244px; height: 100vh; box-sizing: border-box; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; padding: 25px 15px 18px; background: linear-gradient(180deg, #271260, #110d37); color: #d8d1ff; }
 .sidebar-brand { display: flex; align-items: center; gap: 10px; padding: 0 9px 29px; color: #fff; font-size: 21px; text-decoration: none; }
 .sidebar-brand span { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 10px; background: #8b68ff; font-size: 12px; }
 .app-sidebar p { margin: 15px 10px 8px; color: #9891c8; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }

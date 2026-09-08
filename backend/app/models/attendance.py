@@ -1,8 +1,8 @@
 import enum
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, String
+from sqlalchemy import Column, Date, DateTime, Enum, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 
 from database import Base
@@ -13,6 +13,12 @@ class AttendanceActivityType(str, enum.Enum):
     TripCompleted = "Trip Completed"
     CheckIn = "Attendance / Check-in"
     CheckOut = "Attendance / Check-out"
+
+
+class AttendanceStatus(str, enum.Enum):
+    Present = "Present"
+    Leave = "Leave"
+    Absent = "Absent"
 
 
 class Attendance(Base):
@@ -36,9 +42,7 @@ class Attendance(Base):
             name="attendance_activity_type",
             values_callable=lambda enum_class: [item.value for item in enum_class],
         ),
-        nullable=False,
-        default=AttendanceActivityType.CheckIn,
-        server_default=AttendanceActivityType.CheckIn.value,
+        nullable=True,
     )
 
     occurred_at = Column(
@@ -55,5 +59,17 @@ class Attendance(Base):
 
     notes = Column(
         String(500),
+        nullable=True,
+    )
+
+    # Daily attendance is separate from the existing activity stream.  Trip
+    # and check-in/out activity rows leave these fields NULL.
+    date = Column(Date, nullable=True)
+    status = Column(
+        Enum(
+            AttendanceStatus,
+            name="attendance_status",
+            values_callable=lambda enum_class: [item.value for item in enum_class],
+        ),
         nullable=True,
     )

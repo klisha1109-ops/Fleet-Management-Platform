@@ -23,6 +23,7 @@ class DriverPerformanceItem(BaseModel):
     on_time_deliveries: int
     on_time_delivery_rate: float
     attendance_check_ins: int
+    attendance_records: int
     attendance_rate: float
 
 

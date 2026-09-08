@@ -28,6 +28,7 @@ from app.crud.shipment import (
     is_driver_assigned_to_shipment,
 )
 from app.models.shipment import ShipmentStatus
+from app.models.trip import Trip, TripStatus
 from app.core.deps import (
     get_current_user,
     require_admin_or_fleet_manager,
@@ -87,6 +88,23 @@ def require_status_transition_permission(db: Session, shipment, next_status: Shi
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Drivers can update only shipments assigned to them.",
         )
+
+
+def require_trip_lifecycle_status_change(db: Session, shipment, next_status: ShipmentStatus) -> None:
+    """Keep the trip lifecycle as the source of truth for operational statuses."""
+    if next_status not in {ShipmentStatus.InTransit, ShipmentStatus.Delivered}:
+        return
+    linked_trip = db.query(Trip).filter(
+        Trip.shipment_id == shipment.shipment_id,
+        Trip.status.in_([TripStatus.Scheduled, TripStatus.Active]),
+    ).first()
+    if linked_trip is None:
+        return
+    action = "Start Trip" if next_status == ShipmentStatus.InTransit else "End Trip"
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=f"Use {action} for trip {linked_trip.trip_id} so shipment, trip, vehicle, and driver statuses stay synchronized.",
+    )
 
 
 @router.post(
@@ -191,6 +209,7 @@ def update_shipment_status(
         status_data.status,
         current_user,
     )
+    require_trip_lifecycle_status_change(db, shipment, status_data.status)
 
     return change_shipment_status(db, shipment, status_data.status)
 

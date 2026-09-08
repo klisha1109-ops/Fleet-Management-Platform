@@ -24,6 +24,7 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import FuelLog from "./pages/FuelLog";
 import Reports from "./pages/Reports";
 import UserManagement from "./pages/UserManagement";
+import Attendance from "./pages/Attendance";
 
 function App() {
   return (
@@ -95,6 +96,7 @@ function App() {
       <Route path="/drivers/new" element={<ProtectedRoute><DriverForm /></ProtectedRoute>} />
       <Route path="/drivers/:driverId/edit" element={<ProtectedRoute><DriverForm /></ProtectedRoute>} />
       <Route path="/maintenance" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
+      <Route path="/attendance" element={<ProtectedRoute allowedRoles={["Admin", "FleetManager", "Dispatcher", "Driver"]}><Attendance /></ProtectedRoute>} />
       <Route path="/fuel-log" element={<ProtectedRoute allowedRoles={["Admin", "FleetManager", "Dispatcher", "Driver"]}><FuelLog /></ProtectedRoute>} />
       <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute allowedRoles={["Admin"]}><UserManagement /></ProtectedRoute>} />

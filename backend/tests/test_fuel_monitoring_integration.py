@@ -230,7 +230,9 @@ class FuelMonitoringIntegrationTests(unittest.TestCase):
         self.assertEqual(self.client.get(f"/fuel-records/{own_record['fuel_id']}").status_code, 200)
         self.assertEqual(self.client.get(f"/fuel-records/{other_record['fuel_id']}").status_code, 403)
         self.assertEqual(self.client.post("/fuel-records/", json=self.fuel_payload(own_vehicle)).status_code, 403)
-        self.assertEqual(self.client.put(f"/fuel-records/{own_record['fuel_id']}", json={"fuel_cost": 2250}).status_code, 403)
+        self.assertEqual(self.client.put(f"/fuel-records/{own_record['fuel_id']}", json={"fuel_cost": 2250}).status_code, 200)
+        self.assertEqual(self.client.put(f"/fuel-records/{other_record['fuel_id']}", json={"fuel_cost": 2250}).status_code, 403)
+        self.assertEqual(self.client.put(f"/fuel-records/{own_record['fuel_id']}", json={"vehicle_id": str(other_vehicle.vehicle_id)}).status_code, 403)
         self.assertEqual(self.client.delete(f"/fuel-records/{own_record['fuel_id']}").status_code, 403)
 
     def test_fuel_efficiency_distinguishes_actual_estimated_and_missing_distance(self):

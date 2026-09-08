@@ -7,9 +7,12 @@ import PageHeader from "../components/PageHeader";
 import StatsCard from "../components/StatsCard";
 import { AuthContext } from "../context/auth-context";
 import api from "../services/api";
+import FleetAnalytics from "./FleetAnalytics";
+import LogisticsAnalytics from "./LogisticsAnalytics";
+import AdminAnalytics from "./AdminAnalytics";
 import "./Dashboard.css";
 
-function FleetOverviewDashboard() {
+export function FleetOverviewDashboard() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
 
@@ -261,6 +264,7 @@ function DriverDashboard() {
         api.get("/trips/"),
         api.get("/shipments/"),
         api.get("/notifications", { params: { unread_only: true, limit: 100 } }),
+        api.get("/attendance/me/history"),
       ]);
       if (!active) return;
 
@@ -270,6 +274,7 @@ function DriverDashboard() {
         trips: responseData(1, []),
         shipments: responseData(2, []),
         notifications: responseData(3, []),
+        attendance: responseData(4, []),
       });
       if (results.every((result) => result.status === "rejected")) setError("Unable to load your driver dashboard.");
     };
@@ -285,24 +290,35 @@ function DriverDashboard() {
   const currentTrip = driver?.current_trip;
   const activeTrips = data.trips.filter((trip) => ["Scheduled", "Active", "In Transit"].includes(trip.status)).length;
   const activeShipments = data.shipments.filter((shipment) => !["Delivered", "Cancelled"].includes(shipment.status)).length;
+  const attendanceRecords = [...data.attendance].sort((first, second) => String(second.date).localeCompare(String(first.date)));
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+  const monthlyAttendance = attendanceRecords.filter((record) => new Date(`${record.date}T00:00:00`) >= monthStart);
+  const presentDays = monthlyAttendance.filter((record) => record.status === "Present").length;
+  const attendanceSummary = monthlyAttendance.length ? `${presentDays}/${monthlyAttendance.length}` : "—";
 
   return <MainLayout>
     <PageHeader eyebrow="Driver Workspace" title="My Dashboard" description="Your assignments, delivery work, and live operational updates." />
     <section className="dashboard-hero"><div><p>FLEETFLOW DRIVER WORKSPACE</p><h2>Stay focused on your next delivery.</h2><span>Review your assignment, active work, and relevant tracking information from one place.</span></div><nav><Link to="/drivers">My Profile</Link><Link to="/trips">My Trips</Link><Link to="/shipments">My Shipments</Link><Link to="/live-tracking">Live Tracking</Link></nav></section>
-    <section className="dashboard-stats" aria-label="Driver statistics"><StatsCard label="Assigned Vehicle" value={assignedVehicle?.registration_number || "—"} detail={assignedVehicle?.status || "No vehicle assigned"} icon="▤" /><StatsCard label="Current Trip" value={currentTrip?.status || "No active trip"} detail={currentTrip ? `${currentTrip.source} to ${currentTrip.destination}` : "No trip assigned"} icon="⌁" tone="purple" /><StatsCard label="Open Trips" value={activeTrips} detail="Scheduled or active" icon="↗" tone="amber" /><StatsCard label="Open Shipments" value={activeShipments} detail="Your assigned delivery work" icon="▣" tone="green" /><StatsCard label="Unread Alerts" value={data.notifications.length} detail="Your notifications" icon="◌" tone="purple" /></section>
+    <section className="dashboard-stats" aria-label="Driver statistics"><StatsCard label="Assigned Vehicle" value={assignedVehicle?.registration_number || "—"} detail={assignedVehicle?.status || "No vehicle assigned"} icon="▤" /><StatsCard label="Current Trip" value={currentTrip?.status || "No active trip"} detail={currentTrip ? `${currentTrip.source} to ${currentTrip.destination}` : "No trip assigned"} icon="⌁" tone="purple" /><StatsCard label="Open Trips" value={activeTrips} detail="Scheduled or active" icon="↗" tone="amber" /><StatsCard label="Open Shipments" value={activeShipments} detail="Your assigned delivery work" icon="▣" tone="green" /><StatsCard label="Attendance This Month" value={attendanceSummary} detail={monthlyAttendance.length ? "Present days / marked days" : "No days marked yet"} icon="◷" tone="green" /><StatsCard label="Unread Alerts" value={data.notifications.length} detail="Your notifications" icon="◌" tone="purple" /></section>
     <section className="dashboard-lower"><article className="dashboard-card"><div className="dashboard-card-heading"><div><p>Current assignment</p><h2>{assignedVehicle?.registration_number || "No vehicle assigned"}</h2></div><Link to="/drivers">View profile</Link></div><div className="dashboard-driver-summary"><div><span>Vehicle status</span><b>{assignedVehicle?.status || "Not assigned"}</b></div><div><span>Current route</span><b>{currentTrip ? `${currentTrip.source} to ${currentTrip.destination}` : "No active route"}</b></div><div><span>Trip status</span><b>{currentTrip?.status || "—"}</b></div></div></article><article className="dashboard-card activity-card"><div className="dashboard-card-heading"><div><p>Notifications</p><h2>Your unread alerts</h2></div></div><div className="placeholder-copy"><span>{data.notifications.length ? "◌" : "✓"}</span><p>{data.notifications.length ? `You have ${data.notifications.length} unread notification${data.notifications.length === 1 ? "" : "s"}. Open the notification bell for details.` : "You have no unread notifications."}</p></div></article></section>
+    <section className="dashboard-card dashboard-attendance-history"><div className="dashboard-card-heading"><div><p>My attendance</p><h2>Attendance history</h2></div><span>{monthlyAttendance.length ? `${presentDays}/${monthlyAttendance.length} days present this month` : "No monthly data"}</span></div>{attendanceRecords.length ? <div className="dashboard-attendance-list">{attendanceRecords.slice(0, 6).map((record) => <div key={record.attendance_id}><time dateTime={record.date}>{new Date(`${record.date}T00:00:00`).toLocaleDateString()}</time><b className={`attendance-status ${String(record.status).toLowerCase()}`}>{record.status}</b><small>{record.notes || "No notes"}</small></div>)}</div> : <div className="placeholder-copy"><span>◷</span><p>No attendance has been marked for you yet.</p></div>}</section>
     {!driver && <EmptyState title="No driver profile found" description="Your account is not linked to a driver record yet. Please contact a Fleet Manager." />}
   </MainLayout>;
+}
+
+function ManagementDashboard({ role }) {
+  const isAdmin = role === "Admin";
+  return <MainLayout><PageHeader eyebrow="Dashboard" title={isAdmin ? "Operations Dashboard" : "Fleet Operations Dashboard"} description={isAdmin ? "Your combined administration, fleet, and logistics analytics workspace." : "Your combined fleet and logistics analytics workspace."} /><div className="dashboard-analytics-stack">{isAdmin && <section className="dashboard-analytics-section"><div className="dashboard-analytics-heading"><p>Administration</p><h2>Admin Analytics</h2></div><AdminAnalytics embedded /></section>}<section className="dashboard-analytics-section"><div className="dashboard-analytics-heading"><p>Fleet</p><h2>Fleet Analytics</h2></div><FleetAnalytics embedded /></section><section className="dashboard-analytics-section"><div className="dashboard-analytics-heading"><p>Logistics</p><h2>Logistics Analytics</h2></div><LogisticsAnalytics embedded /></section></div></MainLayout>;
 }
 
 function Dashboard() {
   const { user } = useContext(AuthContext);
 
   if (!user) return <MainLayout><LoadingCard message="Loading your workspace..." /></MainLayout>;
-  if (user.role === "Admin") return <Navigate to="/analytics/admin" replace />;
+  if (user.role === "Admin") return <ManagementDashboard role="Admin" />;
   if (user.role === "Dispatcher") return <Navigate to="/analytics/logistics" replace />;
   if (user.role === "Driver") return <DriverDashboard />;
-  if (user.role === "FleetManager") return <FleetOverviewDashboard />;
+  if (user.role === "FleetManager") return <ManagementDashboard role="FleetManager" />;
   return <Navigate to="/login" replace />;
 }
 

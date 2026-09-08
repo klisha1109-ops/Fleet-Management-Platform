@@ -1,0 +1,4 @@
+.analytics-route-select { display: grid; gap: 6px; margin: 0 0 12px; color: var(--muted); font-size: 12px; font-weight: 800; }
+.analytics-route-select select { min-height: 40px; border: 1px solid var(--border); border-radius: 8px; padding: 0 10px; background: #fff; color: var(--text); font: inherit; }
+.analytics-route-map { height: 300px; overflow: hidden; border: 1px solid var(--border); border-radius: 12px; }
+.analytics-route-map .leaflet-container { width: 100%; height: 100%; }

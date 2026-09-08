@@ -40,6 +40,13 @@ def driver_can_read_record(db: Session, current_user, record) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Drivers can view fuel records only for their assigned vehicle.")
 
 
+def ensure_driver_can_edit_record(db: Session, current_user, record, payload: FuelRecordUpdate) -> None:
+    """Allow a Driver to correct values only on their assigned vehicle's record."""
+    driver_can_read_record(db, current_user, record)
+    if payload.vehicle_id is not None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Drivers cannot move a fuel record to another vehicle.")
+
+
 @router.post("/", response_model=FuelRecordResponse, status_code=status.HTTP_201_CREATED)
 def add_fuel_record(
     payload: FuelRecordCreate,
@@ -84,13 +91,19 @@ def edit_fuel_record(
     fuel_id: UUID,
     payload: FuelRecordUpdate,
     db: Session = Depends(get_db),
-    current_user=Depends(require_admin_or_fleet_manager),
+    current_user=Depends(get_current_user),
 ):
     record = get_fuel_record(db, fuel_id)
     if record is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fuel record not found")
-    if payload.vehicle_id is not None:
-        ensure_vehicle_exists(db, payload.vehicle_id)
+    current_role = role_value(current_user)
+    if current_role == "Driver":
+        ensure_driver_can_edit_record(db, current_user, record, payload)
+    elif current_role in {"Admin", "FleetManager"}:
+        if payload.vehicle_id is not None:
+            ensure_vehicle_exists(db, payload.vehicle_id)
+    else:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission to edit fuel records.")
     return update_fuel_record(db, record, payload)
 
 

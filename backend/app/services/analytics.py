@@ -5,7 +5,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.models.attendance import Attendance, AttendanceActivityType
+from app.models.attendance import Attendance, AttendanceActivityType, AttendanceStatus
 from app.models.driver import Driver
 from app.models.fuel_record import FuelRecord
 from app.models.maintenance import Maintenance, MaintenanceStatus
@@ -81,15 +81,27 @@ def driver_performance(
     )
     completed_trips = _apply_completed_trip_dates(trip_query, start_date, end_date).all()
 
-    attendance_query = db.query(Attendance.driver_id).filter(
-        Attendance.driver_id.in_(driver_ids),
-        Attendance.activity_type == AttendanceActivityType.CheckIn,
+    daily_attendance_query = db.query(Attendance.driver_id, Attendance.status).filter(
+        Attendance.driver_id.in_(driver_ids), Attendance.date.isnot(None), Attendance.status.isnot(None),
     )
     if start_date is not None:
-        attendance_query = attendance_query.filter(Attendance.occurred_at >= start_date)
+        daily_attendance_query = daily_attendance_query.filter(Attendance.date >= start_date.date())
     if end_date is not None:
-        attendance_query = attendance_query.filter(Attendance.occurred_at <= end_date)
-    checked_in_driver_ids = {row[0] for row in attendance_query.distinct().all()}
+        daily_attendance_query = daily_attendance_query.filter(Attendance.date <= end_date.date())
+    daily_attendance = daily_attendance_query.all()
+    legacy_check_in_query = db.query(Attendance.driver_id).filter(
+        Attendance.driver_id.in_(driver_ids),
+        Attendance.activity_type == AttendanceActivityType.CheckIn,
+        Attendance.date.is_(None),
+    )
+    if start_date is not None:
+        legacy_check_in_query = legacy_check_in_query.filter(Attendance.occurred_at >= start_date)
+    if end_date is not None:
+        legacy_check_in_query = legacy_check_in_query.filter(Attendance.occurred_at <= end_date)
+    legacy_checked_in_driver_ids = {row[0] for row in legacy_check_in_query.distinct().all()}
+    daily_by_driver = {item: [] for item in driver_ids}
+    for attendance in daily_attendance:
+        daily_by_driver.setdefault(attendance.driver_id, []).append(attendance.status)
 
     trips_by_driver = {item: [] for item in driver_ids}
     for trip in completed_trips:
@@ -98,6 +110,8 @@ def driver_performance(
     items = []
     total_evaluable = 0
     total_on_time = 0
+    total_attendance_present = 0
+    total_attendance_records = 0
     for driver in drivers:
         driver_trips = trips_by_driver.get(driver.driver_id, [])
         evaluable = [
@@ -108,7 +122,15 @@ def driver_performance(
         on_time = [trip for trip in evaluable if trip.ended_at <= trip.expected_delivery_at]
         total_evaluable += len(evaluable)
         total_on_time += len(on_time)
-        check_ins = 1 if driver.driver_id in checked_in_driver_ids else 0
+        daily_statuses = daily_by_driver.get(driver.driver_id, [])
+        if daily_statuses:
+            attendance_records = len(daily_statuses)
+            check_ins = sum(item == AttendanceStatus.Present for item in daily_statuses)
+        else:
+            attendance_records = 1 if driver.driver_id in legacy_checked_in_driver_ids else 0
+            check_ins = attendance_records
+        total_attendance_present += check_ins
+        total_attendance_records += attendance_records
         items.append(
             {
                 "driver_id": driver.driver_id,
@@ -119,7 +141,8 @@ def driver_performance(
                 "on_time_deliveries": len(on_time),
                 "on_time_delivery_rate": _percentage(len(on_time), len(evaluable)),
                 "attendance_check_ins": check_ins,
-                "attendance_rate": 100.0 if check_ins else 0.0,
+                "attendance_records": attendance_records,
+                "attendance_rate": _percentage(check_ins, attendance_records) if daily_statuses else (100.0 if check_ins else 0.0),
             }
         )
 
@@ -130,8 +153,8 @@ def driver_performance(
             "deliveries_with_expected_time": total_evaluable,
             "on_time_deliveries": total_on_time,
             "on_time_delivery_rate": _percentage(total_on_time, total_evaluable),
-            "drivers_with_check_in": len(checked_in_driver_ids),
-            "attendance_rate": _percentage(len(checked_in_driver_ids), len(drivers)),
+            "drivers_with_check_in": sum(item["attendance_check_ins"] > 0 for item in items),
+            "attendance_rate": _percentage(total_attendance_present, total_attendance_records) if daily_attendance else _percentage(len(legacy_checked_in_driver_ids), len(drivers)),
         },
         "drivers": items,
     }

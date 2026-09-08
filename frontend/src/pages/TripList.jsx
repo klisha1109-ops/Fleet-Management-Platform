@@ -181,6 +181,9 @@ function TripList() {
                       </td>
                       <td className="trip-row-actions">
                         <Link to={`/trips/${trip.trip_id}`}>View</Link>
+                        <Link to={`/live-tracking?vehicle_id=${encodeURIComponent(trip.vehicle_id)}&trip_id=${encodeURIComponent(trip.trip_id)}`}>
+                          Map
+                        </Link>
                       </td>
                     </tr>
                   );
