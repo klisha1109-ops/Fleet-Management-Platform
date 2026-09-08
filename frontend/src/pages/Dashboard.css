@@ -65,8 +65,3 @@
   .dashboard-hero h2 { font-size:25px; }
   .dashboard-hero nav { grid-template-columns:1fr; }
 }
-.dashboard-analytics-section .app-shell { display: block; }
-.dashboard-analytics-section .app-sidebar,
-.dashboard-analytics-section .app-navbar { display: none; }
-.dashboard-analytics-section .app-content { display: block; }
-.dashboard-analytics-section .app-page { padding: 0; }

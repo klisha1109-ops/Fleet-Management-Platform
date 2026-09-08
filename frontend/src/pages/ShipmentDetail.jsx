@@ -36,6 +36,7 @@ function ShipmentDetail() {
   const { shipmentId } = useParams();
 
   const [shipment, setShipment] = useState(null);
+  const [trips, setTrips] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [history, setHistory] = useState({ customer: [], vehicle: [] });
@@ -49,6 +50,8 @@ function ShipmentDetail() {
     try {
       const response = await api.get(`/shipments/${shipmentId}`);
       setShipment(response.data);
+      const tripResponse = await api.get("/trips/").catch(() => ({ data: [] }));
+      setTrips(Array.isArray(tripResponse.data) ? tripResponse.data : []);
 
       if (isManager) {
         const requests = [
@@ -101,9 +104,17 @@ function ShipmentDetail() {
     [vehicles, shipment]
   );
 
-  const actions = shipment
+  const baseActions = shipment
     ? roleActions[user?.role]?.[shipment.status] || []
     : [];
+  const hasLinkedTrip = trips.some(
+    (trip) => trip.shipment_id === shipment?.shipment_id
+  );
+  const actions = hasLinkedTrip
+    ? baseActions.filter(
+        (action) => action !== "In Transit" && action !== "Delivered"
+      )
+    : baseActions;
 
   const updateStatus = async (nextStatus) => {
     setUpdating(true);

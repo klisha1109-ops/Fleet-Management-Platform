@@ -16,6 +16,9 @@ __pycache__/
 .coverage
 htmlcov/
 
+# Celery Beat runtime state
+celerybeat-schedule*
+
 # Editor files
 .vscode/
 .idea/

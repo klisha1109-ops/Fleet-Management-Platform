@@ -488,7 +488,7 @@ function Drivers() {
   return (
     <MainLayout>
       <PageHeader
-        eyebrow={canViewDirectory ? "Fleet Management" : "Fleet Management / Read Only"}
+        eyebrow="Fleet Management"
         title="Drivers"
         description="Monitor driver availability, active assignments, and contact details from one workspace."
         actionLabel={canManageDrivers ? "Add Driver" : undefined}
@@ -506,7 +506,7 @@ function Drivers() {
 
       <section className="drivers-toolbar">
         <div>
-          <h2>{user?.role === "Dispatcher" ? "Driver directory (read only)" : "Driver directory"}</h2>
+          <h2>Driver directory</h2>
           <p>{filteredDrivers.length} of {drivers.length} drivers shown</p>
         </div>
         <div className="drivers-toolbar-controls">

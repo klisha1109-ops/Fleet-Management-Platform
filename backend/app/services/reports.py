@@ -50,8 +50,8 @@ def fuel_consumption_report(db: Session, period: ReportPeriod) -> dict:
 
 def driver_performance_report(db: Session, period: ReportPeriod) -> dict:
     metrics = driver_performance(db, start_date=period.start_datetime, end_date=period.end_datetime)
-    data = [{"driver_id": str(item["driver_id"]), "driver": item["full_name"], "status": item["status"], "trips_completed": item["trips_completed"], "on_time_trips": item["on_time_deliveries"], "delayed_trips": max(0, item["deliveries_with_expected_time"] - item["on_time_deliveries"]), "on_time_rate": item["on_time_delivery_rate"], "attendance": {"check_ins": item["attendance_check_ins"], "rate": item["attendance_rate"]}} for item in metrics["drivers"]]
-    return _base("driver_performance", period, metrics["summary"], data, ["On-time performance is calculated only for completed trips whose shipment has expected_delivery_at. Attendance is derived from recorded Check-in activity."])
+    data = [{"driver_id": str(item["driver_id"]), "driver": item["full_name"], "status": item["status"], "trips_completed": item["trips_completed"], "on_time_trips": item["on_time_deliveries"], "delayed_trips": max(0, item["deliveries_with_expected_time"] - item["on_time_deliveries"]), "on_time_rate": item["on_time_delivery_rate"], "attendance": {"present_days": item["attendance_check_ins"], "recorded_days": item["attendance_records"], "rate": item["attendance_rate"]}} for item in metrics["drivers"]]
+    return _base("driver_performance", period, metrics["summary"], data, ["On-time performance is calculated only for completed trips whose shipment has expected_delivery_at. Attendance uses management-marked Present/Leave/Absent records when available; historic driver Check-in activity is used as a compatibility fallback."])
 
 
 def delivery_performance_report(db: Session, period: ReportPeriod) -> dict:
