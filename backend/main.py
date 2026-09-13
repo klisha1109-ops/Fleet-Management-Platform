@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from config import settings
 
 from app.routers.auth import router as auth_router
 from app.routers.vehicle import router as vehicle_router
@@ -37,14 +38,18 @@ app = FastAPI(
     lifespan=lifespan,
     title="FleetFlow API"
 )
-
+allowed_origins = [
+    origin.strip()
+    for origin in settings.CORS_ORIGINS.split(",")
+    if origin.strip()
+]
 # CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],          
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],          
-    allow_headers=["*"],          
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Register routers

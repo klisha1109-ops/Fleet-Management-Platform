@@ -29,6 +29,7 @@ def upgrade() -> None:
     )
 
     user_role.create(op.get_bind(), checkfirst=True)
+    op.execute("ALTER TABLE users ALTER COLUMN role DROP DEFAULT")
 
     op.alter_column(
         "users",
@@ -38,6 +39,7 @@ def upgrade() -> None:
         postgresql_using="role::user_role",
         existing_nullable=False,
     )
+    op.execute("ALTER TABLE users ALTER COLUMN role SET DEFAULT 'Driver'::user_role")
 
 
 def downgrade() -> None:
