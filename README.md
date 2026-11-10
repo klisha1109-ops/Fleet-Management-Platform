@@ -1,240 +1,127 @@
 # FleetFlow
 
-FleetFlow is a Fleet Management System developed using **FastAPI**, **React**, and **PostgreSQL**. The system helps organizations manage drivers, vehicles, shipments, trips, fuel records, maintenance, GPS tracking, attendance, and notifications through a modern web application.
+FleetFlow is a full-stack Fleet Management and Logistics System built to manage vehicles, drivers, shipments, trips, fuel records, maintenance, attendance, notifications, and reports from one centralized platform.
 
----
+The application supports role-based access for Admin, Fleet Manager, Dispatcher, and Driver users. It provides shipment tracking, driver and vehicle assignment, route planning, GPS tracking, fuel monitoring, maintenance reminders, analytics, and PDF/Excel report generation.
 
-## 🚀 Tech Stack
 
-### Backend
-- FastAPI
-- Python
-- PostgreSQL
-- SQLAlchemy
-- Alembic
-- JWT Authentication
-- Pydantic
+## ✨ Features
+
+- JWT-based authentication and role-based access control
+- User registration, login, email verification, and profile management
+- Vehicle registration, availability, and fleet management
+- Driver registration, attendance, licence, and performance tracking
+- Shipment creation, assignment, and delivery status tracking
+- Trip scheduling, dispatch management, and driver-vehicle allocation
+- Route calculation, ETA estimation, and live GPS tracking
+- Fuel refill records, mileage tracking, and fuel analytics
+- Vehicle maintenance scheduling, service records, and reminders
+- Notifications and dashboard analytics
+- PDF and Excel report generation
+
+## 🧰 Technology Stack
 
 ### Frontend
+
 - React
 - Vite
-- Tailwind CSS
+- JavaScript / JSX
+- React Router
 - Axios
 - React Context API
+- Leaflet and React Leaflet
+- Recharts
+- CSS
 
----
+### Backend
 
-# 📁 Project Structure
+- Python
+- FastAPI
+- SQLAlchemy
+- Alembic
+- Pydantic
+- Uvicorn
+- JWT Authentication
+- Passlib and Bcrypt
+
+### Database and Background Services
+
+- PostgreSQL
+- Redis
+- Celery
+- FastAPI-Mail
+
+### Maps, Routing, and Deployment
+
+- OpenStreetMap
+- Nominatim Geocoding
+- OSRM Route Service
+- Railway
+- Git and GitHub
+
+## 📁 Project Structure
 
 ```text
-fleetflow/
+FleetFlow/
 ├── backend/
+│   ├── alembic/
+│   │   └── versions/              # Database migration files
 │   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py
-│   │   ├── database.py
-│   │   ├── config.py
-│   │   ├── models/
-│   │   │   ├── __init__.py
+│   │   ├── core/                  # Security and dependencies
+│   │   ├── crud/                  # Database operations
+│   │   ├── models/                # SQLAlchemy database models
 │   │   │   ├── user.py
 │   │   │   ├── driver.py
 │   │   │   ├── vehicle.py
 │   │   │   ├── shipment.py
 │   │   │   ├── trip.py
 │   │   │   ├── gps_tracking.py
-│   │   │   ├── maintenance.py
 │   │   │   ├── fuel_record.py
+│   │   │   ├── maintenance.py
+│   │   │   ├── vehicle_maintenance.py
 │   │   │   ├── notification.py
 │   │   │   └── attendance.py
-│   │   ├── schemas/
-│   │   │   ├── __init__.py
-│   │   │   └── user.py
-│   │   ├── routers/
-│   │   │   ├── __init__.py
-│   │   │   └── auth.py
-│   │   ├── core/
-│   │   │   ├── __init__.py
-│   │   │   ├── security.py
-│   │   │   └── deps.py
-│   │   └── crud/
-│   │       ├── __init__.py
-│   │       └── user.py
-│   ├── alembic/
-│   │   └── versions/
-│   ├── alembic.ini
+│   │   ├── routers/               # FastAPI route modules
+│   │   │   ├── auth.py
+│   │   │   ├── user.py
+│   │   │   ├── vehicle.py
+│   │   │   ├── driver.py
+│   │   │   ├── shipment.py
+│   │   │   ├── trip.py
+│   │   │   ├── gps_tracking.py
+│   │   │   ├── maintenance.py
+│   │   │   ├── fuel_record.py
+│   │   │   ├── attendance.py
+│   │   │   ├── analytics.py
+│   │   │   ├── reports.py
+│   │   │   └── notification.py
+│   │   ├── schemas/               # Pydantic request and response schemas
+│   │   ├── services/              # Application services
+│   │   └── tasks/                 # Celery background tasks
+│   ├── config.py
+│   ├── database.py
+│   ├── main.py
+│   ├── celery_app.py
+│   ├── mail.py
 │   ├── requirements.txt
-│   ├── .env
-│   └── .gitignore
-└── frontend/
-    ├── public/
-    ├── src/
-    │   ├── api/
-    │   │   └── axios.js
-    │   ├── components/
-    │   │   └── auth/
-    │   │       ├── LoginForm.jsx
-    │   │       └── SignupForm.jsx
-    │   ├── context/
-    │   │   └── AuthContext.jsx
-    │   ├── pages/
-    │   │   ├── Login.jsx
-    │   │   ├── Signup.jsx
-    │   │   └── Dashboard.jsx
-    │   ├── routes/
-    │   │   └── ProtectedRoute.jsx
-    │   ├── App.jsx
-    │   └── main.jsx
-    ├── package.json
-    └── .env
-```
-
----
-
-# ✨ Features
-
-- User Authentication (JWT)
-- User Registration & Login
-- Driver Management
-- Vehicle Management
-- Shipment Management
-- Trip Management
-- GPS Tracking
-- Fuel Record Management
-- Vehicle Maintenance Records
-- Attendance Management
-- Notifications
-- RESTful API
-- Protected Routes
-- Responsive User Interface
-
----
-
-# ⚙️ Backend Setup
-
-## 1. Navigate to Backend
-
-```bash
-cd backend
-```
-
-## 2. Create Virtual Environment
-
-```bash
-python -m venv venv
-```
-
-## 3. Activate Virtual Environment
-
-### Windows
-
-```bash
-venv\Scripts\activate
-```
-
-## 4. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-## 5. Configure Environment Variables
-
-Create a `.env` file inside the backend folder and add your PostgreSQL configuration.
-
-Example:
-
-```env
-DATABASE_URL=postgresql://username:password@localhost:5432/fleetflow
-SECRET_KEY=your_secret_key
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-```
-
-## 6. Run Database Migrations
-
-```bash
-alembic upgrade head
-```
-
-## 7. Start Backend
-
-```bash
-uvicorn app.main:app --reload
-```
-
-Backend runs at:
-
-```
-http://127.0.0.1:8000
-```
-
-API Documentation:
-
-```
-http://127.0.0.1:8000/docs
-```
-
----
-
-# 💻 Frontend Setup
-
-## Navigate to Frontend
-
-```bash
-cd frontend
-```
-
-## Install Dependencies
-
-```bash
-npm install
-```
-
-## Start Development Server
-
-```bash
-npm run dev
-```
-
-Frontend runs at:
-
-```
-http://localhost:5173
-```
-
----
-
-# 🔐 Authentication
-
-- JWT-based Authentication
-- Login
-- Signup
-- Protected Routes
-- Authorization Middleware
-
----
-
-# 📌 Future Enhancements
-
-- Driver Dashboard
-- Admin Dashboard
-- Vehicle Analytics
-- Real-time GPS Tracking
-- Email Notifications
-- Report Generation
-- Role-Based Access Control
-- Deployment using Docker
-
----
-
-# 👨‍💻 Team
-
-**FleetFlow Team 3**
-
-- Ayush Singh
-
----
-
-# 📄 License
-
-This project is developed for educational and academic purposes.
+│   ├── alembic.ini
+│   └── .env.example
+│
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── api/                   # Axios API configuration
+│   │   ├── assets/
+│   │   ├── components/
+│   │   ├── context/               # Authentication context
+│   │   ├── layouts/
+│   │   ├── pages/                 # Application pages
+│   │   ├── routes/                # Protected routes
+│   │   ├── services/              # API service functions
+│   │   ├── styles/
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── package.json
+│   └── vite.config.js
+│
+└── README.md
